@@ -13,5 +13,6 @@ pip install -r requirements.txt
 `samlog.py`: Example of running model programmatically with a single-cell image
 (nuclear + membrane channels).
 
-A programmatic approach based on
-[the napari plugin from JoOkuma](https://github.com/JoOkuma/napari-segment-anything)
+To run interactively: open an IPython terminal and `%run samlog.py`
+
+Derived from [the napari plugin from JoOkuma](https://github.com/JoOkuma/napari-segment-anything)
