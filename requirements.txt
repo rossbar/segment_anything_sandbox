@@ -1,0 +1,10 @@
+numpy
+matplotlib
+scikit-image
+ipython
+pyqt6
+tqdm
+
+segment-anything
+torch
+torchvision
