@@ -8,6 +8,7 @@ import tifffile as tff
 import time
 
 from segment_anything import SamPredictor, sam_model_registry
+plt.ion()
 
 SAM_WEIGHTS_URL = {
     "default": "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth",
@@ -82,9 +83,11 @@ toc = time.time()
 print(f"Done: {(toc - tic)*1e3:.2f} ms")
 
 # Visualize
-fig, ax = plt.subplots(1, mask.shape[0])
-for idx, (a, c, m) in enumerate(zip(ax, C, mask)):
-    a.imshow(img)
-    a.imshow(m, alpha=0.2)
-    a.set_title(f"Mask {idx}, confidence: {c:.2f}")
-plt.show()
+def show_masks(mask, C):
+    fig, ax = plt.subplots(1, mask.shape[0])
+    for idx, (a, c, m) in enumerate(zip(ax, C, mask)):
+        a.imshow(img)
+        a.imshow(m, alpha=0.2)
+        a.set_title(f"Mask {idx}, confidence: {c:.2f}")
+
+show_masks(mask, C)
