@@ -91,3 +91,15 @@ def show_masks(mask, C):
         a.set_title(f"Mask {idx}, confidence: {c:.2f}")
 
 show_masks(mask, C)
+
+# Select points interactively
+fig, ax = plt.subplots()
+ax.imshow(img)
+
+from cursor import PointSelector
+datagen = PointSelector(ax)
+breakpoint()
+
+# Run the prediction
+mask, c, logits = predictor.predict(datagen.points, datagen.labels)
+show_masks(mask, C)
