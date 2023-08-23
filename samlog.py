@@ -73,16 +73,6 @@ predictor.set_image(img)
 toc = time.time()
 print(f"Done: {toc - tic:.2f} seconds")
 
-# Try with a single point
-pts = np.array([(312, 218)])  # from matplotlib hover feature
-labels = np.ones(pts.shape[0])  # Assuming all points belong to cells
-print("Running prediction...")
-tic = time.time()
-mask, C, logits = predictor.predict(pts, point_labels=labels)
-toc = time.time()
-print(f"Done: {(toc - tic)*1e3:.2f} ms")
-
-# Visualize
 def show_masks(mask, C):
     fig, ax = plt.subplots(1, mask.shape[0])
     for idx, (a, c, m) in enumerate(zip(ax, C, mask)):
@@ -90,16 +80,9 @@ def show_masks(mask, C):
         a.imshow(m, alpha=0.2)
         a.set_title(f"Mask {idx}, confidence: {c:.2f}")
 
-show_masks(mask, C)
-
 # Select points interactively
 fig, ax = plt.subplots()
 ax.imshow(img)
 
 from cursor import PointSelector
-datagen = PointSelector(ax)
-breakpoint()
-
-# Run the prediction
-mask, c, logits = predictor.predict(datagen.points, datagen.labels)
-show_masks(mask, C)
+datagen = PointSelector(ax, predictor)
