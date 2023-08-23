@@ -36,6 +36,14 @@ class InteractivePredictor:
         self.ax.imshow(self._mask[0], alpha=0.2)
         self.ax.figure.canvas.draw()
 
+    def clear_canvas(self):
+        # NOTE: Creating/destroying new artists/collections every time is not
+        # efficient. Refactor if we want to push further
+        while len(self.ax.images) > 1:
+            self.ax.images[-1].remove()
+        for pt in self.ax.collections:
+            pt.remove()
+        self.ax.figure.canvas.draw()
 
     def on_click(self, event):
         if not event.inaxes:
@@ -60,3 +68,5 @@ class InteractivePredictor:
         if event.key == "c":
             self._points = []
             self._labels = []
+            self._mask = None
+            self.clear_canvas()
