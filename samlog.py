@@ -77,7 +77,7 @@ ax.imshow(img)
 # Get centroids (for demonstration purposes)
 labels = measure.regionprops(mask)
 centroids = np.array([p.centroid for p in labels])
-ax.scatter(*np.array(centroids).T)
 
 # Create an interactive SAM mpl app
 app = InteractivePredictor(ax, predictor)
+app.load_centroids(centroids)
