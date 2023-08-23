@@ -63,7 +63,7 @@ y = data["y"]
 
 # Pick an image
 idx = 200
-img, mask = tissuenet_to_sam_input(X[idx]), y[idx][..., 0]
+img, mask = tissuenet_to_sam_input(X[idx]), y[idx][..., 1]
 
 # Load image -> model
 print("Loading image to SAM...")
@@ -77,7 +77,8 @@ ax.imshow(img)
 # Get centroids (for demonstration purposes)
 labels = measure.regionprops(mask)
 centroids = np.array([p.centroid for p in labels])
+boxes = np.array([p.bbox for p in labels])
 
 # Create an interactive SAM mpl app
 app = InteractivePredictor(ax, predictor)
-app.load_centroids(centroids)
+app.load_boxes(boxes)
