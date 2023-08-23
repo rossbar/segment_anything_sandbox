@@ -84,5 +84,5 @@ def show_masks(mask, C):
 fig, ax = plt.subplots()
 ax.imshow(img)
 
-from cursor import PointSelector
-datagen = PointSelector(ax, predictor)
+from cursor import InteractivePredictor
+app = InteractivePredictor(ax, predictor)

@@ -2,7 +2,7 @@ import time
 import numpy as np
 from matplotlib.backend_bases import MouseEvent, MouseButton
 
-class PointSelector:
+class InteractivePredictor:
     """A cursor object for selecting points in a maptlotlib canvas."""
     def __init__(self, ax, predictor):
         self.ax = ax
@@ -23,6 +23,20 @@ class PointSelector:
     def labels(self):
         return np.asarray(self._labels)
 
+    def predict(self):
+        print("Running prediction...")
+        tic = time.time()
+        self._mask, _, _ = self.predictor.predict(self.points, self.labels)
+        toc = time.time()
+        print(f"Done: {(toc - tic) * 1e3:.2f} ms")
+
+    def show_mask(self):
+        if self._mask is None:
+            raise ValueError("No mask - run prediction first.")
+        self.ax.imshow(self._mask[0], alpha=0.2)
+        self.ax.figure.canvas.draw()
+
+
     def on_click(self, event):
         if not event.inaxes:
             return
@@ -41,11 +55,8 @@ class PointSelector:
     def on_press(self, event):
         print("Press", event.key)
         if event.key == "r":
-            print("Running prediction...")
-            tic = time.time()
-            self._mask, c, logits = self.predictor.predict(self.points, self.labels)
-            toc = time.time()
-            print(f"Done: {(toc - tic) * 1e3:.2f} ms")
+            self.predict()
+            self.show_mask()
         if event.key == "c":
             self._points = []
             self._labels = []
