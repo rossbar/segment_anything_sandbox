@@ -36,7 +36,10 @@ class InteractivePredictor:
     def show_mask(self):
         if self._mask is None:
             raise ValueError("No mask - run prediction first.")
-        self.ax.imshow(self._mask, alpha=0.2)
+        # Switch to float w/ nans for better opacity
+        m = self._mask.astype(float)
+        m[m == 0] = np.nan
+        self.ax.imshow(m, alpha=0.2)
         self.ax.figure.canvas.draw()
 
     def clear_canvas(self):
