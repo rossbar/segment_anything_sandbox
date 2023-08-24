@@ -1,15 +1,22 @@
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
-from skimage import color, util
-from pathlib import Path
-from tqdm import tqdm
-import urllib.request
-import tifffile as tff
-import time
+from skimage import measure, color, util
 
 from segment_anything import SamPredictor, sam_model_registry
+from cursor import InteractivePredictor
+
 plt.ion()
 
+def tissuenet_to_sam_input(img):
+    img = img.sum(axis=-1)  # Combine nuclear and membrane into single channel
+    img = color.gray2rgb(img)  # Convert to rgb TODO: is this necessary for model?
+    img -= img.min()  # fp from 0. to 1.
+    img /= img.max()
+    img = util.img_as_ubyte(img)
+    return img.transpose((1, 0, 2))
+
+# Setup SAM
 SAM_WEIGHTS_URL = {
     "default": "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth",
     "vit_h": "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth",
@@ -25,7 +32,7 @@ weight_path = cache_dir / SAM_WEIGHTS_URL["default"].split("/")[-1]
 # Download model weights if necessary
 if not weight_path.exists():
     print("Downloading model weights...")
-    
+
     def prog_hook(t):
         last = [0]
         def update_to(b=1, bsize=1, tsize=None):
@@ -33,14 +40,14 @@ if not weight_path.exists():
             t.update((b - last[0]) * bsize)
             last[0] = b
         return update_to
-        
+
     weight_url = SAM_WEIGHTS_URL["default"]
-        
+
     with tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1) as t:
         urllib.request.urlretrieve(weight_url, weight_path, reporthook=prog_hook(t))
 
     print("Done")
-    
+
 # Set up model
 device = "cpu"
 model_type = "default"
@@ -48,58 +55,30 @@ model = sam_model_registry[model_type](weight_path)
 model.to(device)
 predictor = SamPredictor(model)
 
-# Example img
-img_url = (
-    "https://github.com/vanvalenlab/intro-to-deepcell/blob/master/"
-    "pretrained_models/resources/example_input_combined.tif?raw=true"
-)
-img_path = Path.cwd() / "example_input_combined.tif"
-if not img_path.exists():
-    urllib.request.urlretrieve(img_url, img_path)
-img = tff.imread(img_path)
+# Load tissuenet
+datapath = Path.home() / ".deepcell/tissuenet_v1-1/test.npz"
+data = np.load(datapath)
+X = data["X"]
+y = data["y"]
 
-# Image pre-processing
-img = img.sum(axis=0)  # Combine nuclear and membrane into single channel
-img = color.gray2rgb(img)  # Convert to rgb TODO: is this necessary for model?
-img -= img.min()  # fp from 0. to 1.
-img /= img.max()
-util.img_as_ubyte(img)
-img = util.img_as_ubyte(img)  # Convert to uint8 (model requirement)
+# Pick an image
+idx = 200
+img, mask = tissuenet_to_sam_input(X[idx]), y[idx][..., 1]
 
-# Finish model setup
-print("Loading image to model...")
-tic = time.time()
+# Load image -> model
+print("Loading image to SAM...")
 predictor.set_image(img)
-toc = time.time()
-print(f"Done: {toc - tic:.2f} seconds")
+print("Done.")
 
-# Try with a single point
-pts = np.array([(312, 218)])  # from matplotlib hover feature
-labels = np.ones(pts.shape[0])  # Assuming all points belong to cells
-print("Running prediction...")
-tic = time.time()
-mask, C, logits = predictor.predict(pts, point_labels=labels)
-toc = time.time()
-print(f"Done: {(toc - tic)*1e3:.2f} ms")
-
-# Visualize
-def show_masks(mask, C):
-    fig, ax = plt.subplots(1, mask.shape[0])
-    for idx, (a, c, m) in enumerate(zip(ax, C, mask)):
-        a.imshow(img)
-        a.imshow(m, alpha=0.2)
-        a.set_title(f"Mask {idx}, confidence: {c:.2f}")
-
-show_masks(mask, C)
-
-# Select points interactively
+# Plot image
 fig, ax = plt.subplots()
 ax.imshow(img)
 
-from cursor import PointSelector
-datagen = PointSelector(ax)
-breakpoint()
+# Get centroids (for demonstration purposes)
+labels = measure.regionprops(mask)
+centroids = np.array([p.centroid for p in labels])
+boxes = np.array([p.bbox for p in labels])
 
-# Run the prediction
-mask, c, logits = predictor.predict(datagen.points, datagen.labels)
-show_masks(mask, C)
+# Create an interactive SAM mpl app
+app = InteractivePredictor(ax, predictor)
+app.load_boxes(boxes)
