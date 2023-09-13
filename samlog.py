@@ -56,7 +56,7 @@ model.to(device)
 predictor = SamPredictor(model)
 
 # Load tissuenet
-datapath = Path.home() / ".deepcell/tissuenet_v1-1/test.npz"
+datapath = Path.home() / ".deepcell/datasets/tissuenet_v1-1/test.npz"
 data = np.load(datapath)
 X = data["X"]
 y = data["y"]
