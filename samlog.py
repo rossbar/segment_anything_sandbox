@@ -6,6 +6,8 @@ from skimage import measure, color, util
 from segment_anything import SamPredictor, sam_model_registry
 from cursor import InteractivePredictor
 
+import torch
+
 plt.ion()
 
 def tissuenet_to_sam_input(img):
@@ -55,8 +57,13 @@ model = sam_model_registry[model_type](weight_path)
 model.to(device)
 predictor = SamPredictor(model)
 
+# Load new weights
+cellsam_wts_path = Path.home() / "SAM_groundtruth_boxPrompt_tissuenet_wholecell_train.pth"
+cellsam_state = torch.load(cellsam_wts_path, map_location=device)
+predictor.model.load_state_dict(cellsam_state, strict=False)
+
 # Load tissuenet
-datapath = Path.home() / ".deepcell/tissuenet_v1-1/test.npz"
+datapath = Path.home() / ".deepcell/datasets/tissuenet_v1-1/test.npz"
 data = np.load(datapath)
 X = data["X"]
 y = data["y"]
